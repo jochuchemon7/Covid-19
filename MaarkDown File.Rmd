@@ -1,0 +1,103 @@
+---
+title: "Covid-19"
+output: html_notebook
+---
+
+###Libraries
+```{r}
+library(caret)
+library(data.table)
+library(Metrics)
+library(DataComputing)
+library(dplyr)
+
+```
+
+
+###Getting Data Set
+```{r}
+datadir = "Desktop/6th Semester/CMPSC 465/Project/"
+
+sample = fread("Desktop/6th Semester/CMPSC 465/Project/Data/Raw/submission.csv")
+test = fread("Desktop/6th Semester/CMPSC 465/Project/Data/Raw/test.csv")
+train = fread("Desktop/6th Semester/CMPSC 465/Project/Data/Raw/train.csv")
+
+```
+
+###Setting Data For Pennsylvania
+```{r}
+
+PennsylvaniaData <- train[train$Country_Region == "US" & train$Province_State == "Pennsylvania"]
+PennsylvaniaTest <- test[test$Country_Region == "US" & test$Province_State == "Pennsylvania"]
+
+
+
+PennsylvaniaTrain <- 
+  USData %>%
+  group_by(Date)%>%
+  filter(Province_State == "Pennsylvania")%>%
+  arrange(desc(Id))
+
+
+PennsylvaniaTest <- 
+  test %>%
+  group_by(Date)%>%
+  filter(Province_State == "Pennsylvania")%>%
+  arrange(desc(ForecastId))
+
+
+PennsylvaniaTrain <- as.data.table(PennsylvaniaTrain)
+Day<- seq(75, length.out=nrow(PennsylvaniaTrain), by=-1)
+PennsylvaniaTrain$Day <- Day
+
+PennsylvaniaTest <- as.data.table(PennsylvaniaTest)
+Day<- seq(75 + nrow(PennsylvaniaTest), length.out=nrow(PennsylvaniaTest), by=-1)
+PennsylvaniaTest$ConfirmedCases = 0
+PennsylvaniaTest$Fatalities = 0
+PennsylvaniaTest$Day = Day
+
+```
+
+
+###Current Graph Of Confirmed Cases in PA From The Start Of the Data Set
+```{r}
+ggplot(data=PennsylvaniaTrain,aes(x=Day,y=ConfirmedCases))+geom_point() + stat_smooth(method=loess) 
+```
+
+
+###Linear Regression (Working progress)
+```{r}
+lm_model <- lm(ConfirmedCases ~ Day, data = PennsylvaniaTrain)
+pred <- predict(lm_model, PennsylvaniaTest)
+
+
+```
+
+
+###US States
+```{r}
+states <- train %>% 
+  filter(Country_Region == "US") %>% 
+  filter(Date >="2020-03-01") %>%
+  group_by(Province_State,Date) %>%
+  summarize(totalConfirmed = sum(ConfirmedCases), totalDeaths=sum(Fatalities))
+
+states <- states %>%
+  filter(Date == latestDate) %>%
+  arrange(desc(totalDeaths))
+
+
+```
+
+###Top Ten Fatality States
+```{r}
+states[1:10,] %>% 
+  ggplot(aes(x=reorder(Province_State,-totalDeaths), y=totalDeaths,fill=Province_State)) +
+  geom_bar(stat="identity")+
+  geom_text(aes(label=totalDeaths), vjust=1.6, color="black", size=3.5)+
+  labs(title = "Top Ten States by Death Count", x = "State", y = "Total Death")
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+
