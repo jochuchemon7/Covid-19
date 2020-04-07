@@ -61,15 +61,27 @@ PennsylvaniaTest$Day = Day
 
 ###Current Graph Of Confirmed Cases in PA From The Start Of the Data Set
 ```{r}
-ggplot(data=PennsylvaniaTrain,aes(x=Day,y=ConfirmedCases))+geom_point() + stat_smooth(method=loess) 
+ggplot(data=PennsylvaniaTrain,aes(x=Day,y=ConfirmedCases))+
+  geom_point()+ 
+  stat_smooth(method=loess)+
+  labs(title = "Confirmed Cases vs Days After First Presumted Cases", x = "Days", y = "Confirmed Cases")
+  
 ```
 
 
-###Linear Regression (Working progress)
+###Linear Regression for Confirmed Cases (Working progress)
 ```{r}
 lm_model <- lm(ConfirmedCases ~ Day, data = PennsylvaniaTrain)
 pred <- predict(lm_model, PennsylvaniaTest)
+pred  = as.data.table(pred)
 
+```
+
+###Linear Regression for the Fatality (working progress)
+```{r}
+lm_model <- lm(Fatalities ~ Day, data = PennsylvaniaTrain)
+pred <- predict(lm_model, PennsylvaniaTest)
+pred = as.data.table(pred)
 
 ```
 
@@ -95,7 +107,7 @@ states[1:10,] %>%
   ggplot(aes(x=reorder(Province_State,-totalDeaths), y=totalDeaths,fill=Province_State)) +
   geom_bar(stat="identity")+
   geom_text(aes(label=totalDeaths), vjust=1.6, color="black", size=3.5)+
-  labs(title = "Top Ten States by Death Count", x = "State", y = "Total Death")
+  labs(title = "Top Ten States by Death Count", x = "State", y = "Total Death")+
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 ```
